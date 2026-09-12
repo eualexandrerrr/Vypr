@@ -6,10 +6,11 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 
 find_package(SDL3 REQUIRED CONFIG)
+find_package(Vulkan REQUIRED)
 
-add_executable(vypr-window src/main.c src/shm.c src/msg.c src/present.c src/present_gpu.c src/present_render.c)
+add_executable(vypr-window src/main.c src/shm.c src/msg.c src/present.c src/present_gpu.c src/present_render.c src/present_vk.c)
 target_include_directories(vypr-window PRIVATE src ../include)
-target_link_libraries(vypr-window PRIVATE SDL3::SDL3)
+target_link_libraries(vypr-window PRIVATE SDL3::SDL3 Vulkan::Vulkan)
 
 # The session daemon: owns the region, the agent link, and which windows stream.
 add_executable(vyprd src/vyprd.c src/shm.c src/msg.c)

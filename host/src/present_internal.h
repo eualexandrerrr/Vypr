@@ -17,5 +17,6 @@ struct present_ops {
 
 extern const struct present_ops present_gpu_ops;
 extern const struct present_ops present_render_ops;
+extern const struct present_ops present_vk_ops;
 
 #endif

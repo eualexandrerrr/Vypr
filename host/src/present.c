@@ -11,8 +11,11 @@ struct presenter {
 struct presenter *presenter_create(SDL_Window *win, const char *backend,
                                    struct presenter *share)
 {
+    /* Native Vulkan by default: it is the only path that keeps the GPU from
+     * pulling every frame across PCIe itself (see present_vk.c). */
     const struct present_ops *ops = &present_gpu_ops;
     if (backend && !strcmp(backend, "render")) ops = &present_render_ops;
+    if (backend && !strcmp(backend, "vulkan")) ops = &present_vk_ops;
 
     /* Sharing only makes sense between the same backend. */
     if (share && share->ops != ops) share = NULL;
@@ -24,7 +27,12 @@ struct presenter *presenter_create(SDL_Window *win, const char *backend,
     if (!p->impl) {
         /* The GPU backend needs a working Vulkan or D3D12; falling back beats
          * refusing to show the window at all. */
-        if (ops != &present_render_ops) {
+        if (ops == &present_vk_ops) {
+            fprintf(stderr, "vypr: 'vulkan' backend unavailable, falling back to 'gpu'\n");
+            ops = &present_gpu_ops;
+            p->impl = ops->create(win, NULL);
+        }
+        if (!p->impl && ops != &present_render_ops) {
             fprintf(stderr, "vypr: '%s' backend unavailable, falling back to 'render'\n",
                     ops->name);
             ops = &present_render_ops;

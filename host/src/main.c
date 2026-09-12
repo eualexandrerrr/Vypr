@@ -74,7 +74,7 @@ static bool covers_host_display(SDL_Window *win, int w, int h)
 static void usage(void)
 {
     fputs("usage: vypr-window --shm PATH --slot N [--title NAME] [--stats]\n"
-          "                 [--sock PATH --window-id ID] [--present gpu|render]\n"
+          "                 [--sock PATH --window-id ID] [--present vulkan|gpu|render]\n"
           "\nRun standalone it presents a slot. vyprd additionally passes --sock\n"
           "and --window-id, which is what turns input back on.\n", stderr);
 }
