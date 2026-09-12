@@ -58,6 +58,19 @@ struct options {
     int         stats;
 };
 
+/* The guest agent flags a window as fullscreen only when it covers the whole
+ * virtual screen. With two monitors in the guest (a physical output plus a
+ * dummy plug) a borderless game on one of them never matches, and the host
+ * shows it as a floating window. A window the exact size of the display it
+ * is on here is the same intent, so treat it as fullscreen too. */
+static bool covers_host_display(SDL_Window *win, int w, int h)
+{
+    const SDL_DisplayID disp = SDL_GetDisplayForWindow(win);
+    const SDL_DisplayMode *dm = disp ? SDL_GetDesktopDisplayMode(disp) : NULL;
+    if (!dm) return false;
+    return w >= dm->w - 2 && h >= dm->h - 2;
+}
+
 static void usage(void)
 {
     fputs("usage: vypr-window --shm PATH --slot N [--title NAME] [--stats]\n"
@@ -1405,6 +1418,9 @@ int main(int argc, char **argv)
     uint64_t stats_at = SDL_GetTicks();
 
     int running = 1;
+    if (!decorated && !views[0].is_popup && covers_host_display(views[0].win, win_w, win_h))
+        SDL_SetWindowFullscreen(views[0].win, true);
+
     while (running) {
         SDL_Event ev;
         while (SDL_PollEvent(&ev)) {
@@ -1876,7 +1892,10 @@ int main(int argc, char **argv)
                              * covers the guest's whole desktop, and showing
                              * that inside a small window is not what the user
                              * asked the app to do. */
-                            const bool want_fs = m->fullscreen != 0;
+                            int cw = 0, ch = 0;
+                            SDL_GetWindowSize(views[0].win, &cw, &ch);
+                            const bool want_fs = m->fullscreen != 0 ||
+                                covers_host_display(views[0].win, cw, ch);
                             const bool is_fs =
                                 (SDL_GetWindowFlags(views[0].win) & SDL_WINDOW_FULLSCREEN) != 0;
                             if (want_fs != is_fs)
