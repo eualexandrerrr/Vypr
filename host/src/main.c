@@ -1434,7 +1434,7 @@ int main(int argc, char **argv)
                     struct vypr_msg_window_id msg = { .window_id = id };
                     send_queued(VYPR_MSG_CLOSE, &msg, sizeof(msg), false);
                 }
-                if (ev.type == SDL_EVENT_QUIT || !v->is_popup) running = 0;
+                if (ev.type == SDL_EVENT_QUIT || !v->is_popup) { fprintf(stderr, "vypr: window exiting: close/quit ev=%u\n", ev.type); running = 0; }
                 break;
             }
             case SDL_EVENT_MOUSE_MOTION:
@@ -1527,7 +1527,7 @@ int main(int argc, char **argv)
                  * so a guest app that grabs input cannot trap the user. */
                 if (ev.type == SDL_EVENT_KEY_DOWN && ev.key.key == SDLK_ESCAPE &&
                     (ev.key.mod & SDL_KMOD_CTRL)) {
-                    running = 0;
+                    fprintf(stderr, "vypr: window exiting: ctrl+esc\n"); running = 0;
                     break;
                 }
                 /* Ctrl+Alt+Shift+M toggles between pointer capture and direct
@@ -1698,7 +1698,7 @@ int main(int argc, char **argv)
                                 sent += n;
                                 /* Drain as we go: the whole image would
                                  * otherwise sit in the outgoing queue at once. */
-                                if (out_flush(daemon_fd) < 0) { running = 0; break; }
+                                if (out_flush(daemon_fd) < 0) { fprintf(stderr, "vypr: window exiting: flush1\n"); running = 0; break; }
                             }
                             send_queued(VYPR_MSG_SET_CLIP_IMAGE_END, NULL, 0, false);
                             fprintf(stderr, "vypr: sent a clipboard image to the "
@@ -1759,7 +1759,7 @@ int main(int argc, char **argv)
 
         pointer_flush(daemon_fd, views[0].window_id, &pointer);
         drop_pump(&drop);
-        if (daemon_fd >= 0 && out_flush(daemon_fd) < 0) running = 0;
+        if (daemon_fd >= 0 && out_flush(daemon_fd) < 0) { fprintf(stderr, "vypr: window exiting: flush2\n"); running = 0; }
 
         pads_poll(pads, daemon_fd,
                   (SDL_GetWindowFlags(views[0].win) & SDL_WINDOW_INPUT_FOCUS) != 0);
@@ -1768,7 +1768,7 @@ int main(int argc, char **argv)
          * the rest touches the compositor, so they are handled here rather
          * than on the thread that receives them. */
         if (daemon_fd >= 0) {
-            if (atomic_load(&link.dead)) running = 0;
+            if (atomic_load(&link.dead)) { fprintf(stderr, "vypr: window exiting: link dead\n"); running = 0; }
 
             pthread_mutex_lock(&link.lock);
             size_t plen = link.pending.len;
@@ -1954,8 +1954,7 @@ int main(int argc, char **argv)
                  * the daemon having dropped it and waiting on the guest. Either
                  * way there is nothing left to show. */
                 const uint32_t st = vypr_slot_state(&shm, v->slot);
-                if (st == VYPR_SLOT_CLOSED || st == VYPR_SLOT_RETIRING)
-                    running = 0;
+                if (st == VYPR_SLOT_CLOSED || st == VYPR_SLOT_RETIRING) { fprintf(stderr, "vypr: window exiting: slot state %u\n", st); running = 0; }
             }
 
             presenter_present(v->pres);
