@@ -378,6 +378,10 @@ static int spawn_client(struct daemon *d, struct window *w)
              * it is held the window cannot be dragged and the cursor is hidden.
              * That is right for a game and wrong for everything before one. */
             (char *)cap_flag,
+            /* VYPR_STATS=1 in the daemon's environment turns on the per-second
+             * fps/upload/present/age line in every window it spawns, which is
+             * the only way to measure a window the daemon owns. */
+            getenv("VYPR_STATS") ? (char *)"--stats" : NULL,
             size_flag ? (char *)"--size" : NULL,
             size_flag ? (char *)size_flag : NULL,
             NULL
