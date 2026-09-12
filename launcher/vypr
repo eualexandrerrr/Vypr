@@ -404,6 +404,20 @@ start_watcher() {
         "$0" __watch >>"${XDG_RUNTIME_DIR:-/tmp}/vypr-watch.log" 2>&1 &
 }
 
+# ------------------------------------------------------------------- hooks
+#
+# A machine-specific step that has to happen between the VM answering and the
+# session starting - on this box, turning off a display driver that grabs the
+# wrong IVSHMEM device - lives in an executable at $CONF_DIR/hooks/<name>, not
+# in this script. It gets the app id and can talk to the guest with the same
+# key; a non-zero exit only warns, so a broken hook never blocks a launch.
+run_hook() {
+    local hook="$CONF_DIR/hooks/$1"; shift
+    [ -x "$hook" ] || return 0
+    VM="$VM" GUEST="$GUEST" GUEST_USER="$GUEST_USER" KEY="$KEY" "$hook" "$@" \
+        || say "hook $(basename "$hook") exited with $?; continuing"
+}
+
 # -------------------------------------------------------------- subcommands
 cmd_run() {
     local app="${1:-}"
@@ -418,6 +432,7 @@ cmd_run() {
 
     ensure_region
     start_vm
+    run_hook pre-run "$app"
     start_daemon MATCHES
     start_agent
     start_parsec
