@@ -318,6 +318,30 @@ static void window_release(struct daemon *d, struct window *w, int tell_agent)
 
 /* ------------------------------------------------------------- window client */
 
+/* $XDG_CONFIG_HOME/vypr/hooks/window, when present and executable, runs with the
+ * window's title, key and host pid once its client has been spawned. A Wayland
+ * client cannot pick the output it opens on - the compositor puts it under the
+ * pointer - and this is where a desktop-specific script moves the window to
+ * the monitor the game belongs on. Fire and forget: the reaper collects it. */
+static void run_window_hook(const struct window *w)
+{
+    char path[1024];
+    const char *xdg = getenv("XDG_CONFIG_HOME");
+    const char *home = getenv("HOME");
+    if (xdg && *xdg)        snprintf(path, sizeof(path), "%s/vypr/hooks/window", xdg);
+    else if (home && *home) snprintf(path, sizeof(path), "%s/.config/vypr/hooks/window", home);
+    else return;
+    if (access(path, X_OK) != 0) return;
+
+    char pidstr[32];
+    snprintf(pidstr, sizeof(pidstr), "%d", (int)w->child);
+    pid_t pid = fork();
+    if (pid == 0) {
+        execl(path, path, w->title, w->key, pidstr, (char *)NULL);
+        _exit(127);
+    }
+}
+
 static int spawn_client(struct daemon *d, struct window *w)
 {
     char exe[640], slot[16], id[32], chrome[16];
@@ -394,6 +418,7 @@ static int spawn_client(struct daemon *d, struct window *w)
     w->child = pid;
     fprintf(stderr, "vyprd: window '%s' -> slot %u, pid %d\n",
             w->title, w->slot, (int)pid);
+    run_window_hook(w);
     return 0;
 }
 
