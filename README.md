@@ -1,3 +1,9 @@
+> **Fork notice.** This is Alexandre's fork of [Amzi-01/Vypr](https://github.com/Amzi-01/Vypr),
+> used by his [dotfiles](https://github.com/eualexandrerrr/dotfiles) (`vm/vypr.sh`) to show RedM
+> from a Windows VM as a native window. All the work is Amzi-01's, released into the public domain
+> under the Unlicense; `main` carries this machine's patches on top of `upstream`, the untouched
+> mirror. See `git log upstream..main` for what changed.
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/brand/vypr-mark-white.svg">
