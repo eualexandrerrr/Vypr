@@ -27,6 +27,9 @@ BIN="$(dirname "$(readlink -f "$0")")"
 SHM=/dev/shm/vypr
 KEY="$HOME/.ssh/vypr-guest"
 export LIBVIRT_DEFAULT_URI="${LIBVIRT_DEFAULT_URI:-qemu:///system}"
+# virsh answers in the user's locale ("executando", not "running") and every state check
+# below compares English strings, so pin the locale for the tools this script drives.
+export LC_ALL=C
 SHM_SIZE_MB_DEFAULT=512
 
 [ -f "$CONF" ] || { echo "vypr: not configured - run the installer first" >&2; exit 1; }
